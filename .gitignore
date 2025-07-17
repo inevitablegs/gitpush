@@ -1,1 +1,8 @@
+<<<<<<< HEAD
 .env
+=======
+gitpush_tool.egg-info
+dist
+build
+token.txt
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c

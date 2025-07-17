@@ -1,6 +1,10 @@
 Metadata-Version: 2.4
 Name: gitpush-tool
+<<<<<<< HEAD
 Version: 0.1.2
+=======
+Version: 0.1.1
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 Summary: A CLI tool to simplify Git push operations with intelligent defaults and options.
 Home-page: https://github.com/yourusername/gitpush_tool
 Author: Ganesh Sonawane
@@ -117,6 +121,7 @@ To push all local tags:
 gitpush_tool --tags
 ```
 
+<<<<<<< HEAD
 ### Creating and Pushing to a New GitHub Repository
 
 To create a new GitHub repository and push your code in one command:
@@ -124,6 +129,8 @@ To create a new GitHub repository and push your code in one command:
 ```bash
 gitpush_tool "Initial commit" --new-repo my-new-repo --description "My awesome project"
 
+=======
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 ### Help
 
 To view all available commands and options:

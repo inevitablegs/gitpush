@@ -92,6 +92,7 @@ To push all local tags:
 gitpush_tool --tags
 ```
 
+<<<<<<< HEAD
 ### Creating and Pushing to a New GitHub Repository
 
 To create a new GitHub repository and push your code in one command:
@@ -99,6 +100,8 @@ To create a new GitHub repository and push your code in one command:
 ```bash
 gitpush_tool "Initial commit" --new-repo my-new-repo --description "My awesome project"
 
+=======
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 ### Help
 
 To view all available commands and options:

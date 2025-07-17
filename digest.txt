@@ -2,10 +2,15 @@ Directory structure:
 └── gitpush_tool/
     ├── README.md
     ├── LICENSE
+<<<<<<< HEAD
     ├── MANIFEST.in
     ├── pyproject.toml
     ├── setup.py
     ├── token
+=======
+    ├── pyproject.toml
+    ├── setup.py
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
     └── gitpush_tool/
         ├── __init__.py
         └── cli.py
@@ -13,6 +18,7 @@ Directory structure:
 ================================================
 FILE: README.md
 ================================================
+<<<<<<< HEAD
 # `gitpush_tool`
 
 [![CI/CD Status](https://github.com/your-username/gitpush_tool/actions/workflows/main.yml/badge.svg)](https://github.com/your-username/gitpush_tool/actions/workflows/main.yml)
@@ -145,15 +151,34 @@ Please ensure your code adheres to good coding practices and includes relevant t
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+=======
+# gitpush_tool
+
+[![Python Version](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/your_username/gitpush_tool/actions)
+[![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/your_username/gitpush_tool/actions)
+
+## 
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 
 
 ================================================
 FILE: LICENSE
 ================================================
+<<<<<<< HEAD
+=======
+
+---
+
+## ðŸ“„ `LICENSE` (MIT)
+```txt
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 MIT License
 
 Copyright (c) 2025 Ganesh Sonawane
 
+<<<<<<< HEAD
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -178,6 +203,8 @@ FILE: MANIFEST.in
 ================================================
 include LICENSE
 include README.md
+=======
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 
 
 ================================================
@@ -196,21 +223,37 @@ from setuptools import setup, find_packages
 from pathlib import Path
 
 setup(
+<<<<<<< HEAD
     name="gitpush-tool",
     version="0.1.1",
+=======
+    name="gitpush",
+    version="0.1.0",
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
     packages=find_packages(),
     install_requires=[],
     entry_points={
         "console_scripts": [
+<<<<<<< HEAD
             "gitpush_tool=gitpush_tool.cli:run"
+=======
+            "gitpush=gitpush.cli:run"
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
         ],
     },
     author="Ganesh Sonawane",
     author_email="sonawaneganu3101@example.com",
+<<<<<<< HEAD
     description="A CLI tool to simplify Git push operations with intelligent defaults and options.",
     long_description=Path("README.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/gitpush_tool",
+=======
+    description="A simple CLI tool to push git commits with a single command.",
+    long_description=Path("README.md").read_text(encoding="utf-8"),
+    long_description_content_type="text/markdown",
+    url="https://github.com/yourusername/gitpush",
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -223,12 +266,15 @@ setup(
 
 
 ================================================
+<<<<<<< HEAD
 FILE: token
 ================================================
 
 
 
 ================================================
+=======
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 FILE: gitpush_tool/__init__.py
 ================================================
 __version__ = "0.1.0"
@@ -238,6 +284,7 @@ __version__ = "0.1.0"
 FILE: gitpush_tool/cli.py
 ================================================
 import os
+<<<<<<< HEAD
 import argparse
 import sys
 
@@ -281,5 +328,21 @@ def run():
 
     print(f"🚀 Running: {push_cmd}")
     os.system(push_cmd)
+=======
+import sys
+
+def run():
+    if len(sys.argv) < 2:
+        print("❌ Please provide a commit message.")
+        print("✅ Example: gitpush 'Initial commit'")
+        sys.exit(1)
+
+    commit_message = sys.argv[1]
+
+    os.system("git init")
+    os.system("git add .")
+    os.system(f'git commit -m "{commit_message}"')
+    os.system("git push")
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
 
 

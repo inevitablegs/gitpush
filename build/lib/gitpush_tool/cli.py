@@ -1,6 +1,7 @@
 import os
 import argparse
 import sys
+<<<<<<< HEAD
 import requests
 from getpass import getpass
 
@@ -75,6 +76,22 @@ def run():
         # Set up git remote
         os.system(f"git remote add {args.remote} {repo_url}")
 
+=======
+
+def run():
+    parser = argparse.ArgumentParser(
+        description="📦 Simple CLI to automate git init, add, commit, and push operations."
+    )
+    parser.add_argument("commit", nargs="?", help="Commit message. If omitted, no commit will be made.")
+    parser.add_argument("branch", nargs="?", help="Branch to push to (e.g., main, feature/xyz).")
+    parser.add_argument("remote", nargs="?", help="Remote name (default: origin).")
+    parser.add_argument("--force", action="store_true", help="Force push (use with caution).")
+    parser.add_argument("--tags", action="store_true", help="Push all local tags.")
+    parser.add_argument("--init", action="store_true", help="Run 'git init' before pushing.")
+
+    args = parser.parse_args()
+
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
     if args.init:
         print("🛠 Initializing git repository...")
         os.system("git init")
@@ -101,4 +118,8 @@ def run():
         push_cmd += f" origin {args.branch}"
 
     print(f"🚀 Running: {push_cmd}")
+<<<<<<< HEAD
     os.system(push_cmd)
+=======
+    os.system(push_cmd)
+>>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
