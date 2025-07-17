@@ -1,9 +1,12 @@
 from setuptools import setup, find_packages
 from pathlib import Path
 
+# Read long description
+long_description = (Path(__file__).parent / "LONG_DESCRIPTION.md").read_text(encoding="utf-8")
+
 setup(
     name="gitpush-tool",
-    version="0.1.2",
+    version="0.2.5",
     packages=find_packages(),
     install_requires=[],
     entry_points={
@@ -12,11 +15,11 @@ setup(
         ],
     },
     author="Ganesh Sonawane",
-    author_email="sonawaneganu3101@example.com",
-    description="A CLI tool to simplify Git push operations with intelligent defaults and options.",
-    long_description=Path("README.md").read_text(encoding="utf-8"),
+    author_email="sonawaneganu3101@gmail.com",
+    description="Supercharged Git push tool with automatic GitHub repo creation and pushing",
+    long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/gitpush_tool",
+    url="https://github.com/inevitablegs/gitpush",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3",
@@ -24,4 +27,10 @@ setup(
         "Operating System :: OS Independent",
     ],
     python_requires=">=3.6",
+    include_package_data=True,
+    project_urls={
+        "Documentation": "https://github.com/inevitablegs/gitpush",
+        "Source": "https://github.com/inevitablegs/gitpush",
+        "Tracker": "https://github.com/inevitablegs/gitpush/issues",
+    },
 )

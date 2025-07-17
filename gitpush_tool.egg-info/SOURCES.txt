@@ -3,6 +3,7 @@ MANIFEST.in
 README.md
 pyproject.toml
 setup.py
+gitpush_tool/__doc__.py
 gitpush_tool/__init__.py
 gitpush_tool/cli.py
 gitpush_tool.egg-info/PKG-INFO

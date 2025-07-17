@@ -1,104 +1,239 @@
+#!/usr/bin/env python3
 import os
 import argparse
 import sys
-import requests
-from getpass import getpass
+import subprocess
+from datetime import datetime
 
-def create_github_repo(repo_name, private=False, description=""):
-    """Create a new GitHub repository using the GitHub API"""
-    # Get GitHub token from environment or prompt
-    token = os.getenv("GITHUB_TOKEN")
-    if not token:
-        token_path = os.path.join(os.path.dirname(__file__), '..', 'token')
-        if os.path.exists(token_path):
-            with open(token_path, 'r') as f:
-                token = f.read().strip()
-        else:
-            token = getpass("Enter your GitHub personal access token: ")
-    
-    headers = {
-        "Authorization": f"token {token}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    data = {
-        "name": repo_name,
-        "description": description,
-        "private": private,
-        "auto_init": False
-    }
+def check_gh_installed():
+    """Check if GitHub CLI is installed"""
+    try:
+        subprocess.run(["gh", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except:
+        return False
+
+def gh_authenticated():
+    """Check if user is authenticated with GitHub CLI"""
+    try:
+        result = subprocess.run(["gh", "auth", "status"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.returncode == 0
+    except:
+        return False
+
+def authenticate_with_gh():
+    """Authenticate user with GitHub CLI"""
+    print("\n🔑 GitHub authentication required")
+    print("We'll use the GitHub CLI (gh) for authentication")
+    print("This will open your browser for secure login")
     
     try:
-        response = requests.post(
-            "https://api.github.com/user/repos",
-            headers=headers,
-            json=data
-        )
-        response.raise_for_status()
-        return response.json()["html_url"]
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Failed to create repository: {e}")
-        return None
+        subprocess.run(["gh", "auth", "login", "--web", "-h", "github.com"], check=True)
+        return True
+    except subprocess.CalledProcessError:
+        print("❌ Authentication failed")
+        return False
+    except FileNotFoundError:
+        print("❌ GitHub CLI not found")
+        return False
+
+def initialize_git_repository():
+    """Initialize git repository if not already initialized"""
+    if not os.path.exists(".git"):
+        print("🛠 Initializing git repository")
+        try:
+            subprocess.run(["git", "init"], check=True)
+            subprocess.run(["git", "branch", "-M", "main"], check=True)
+            
+            # Create basic .gitignore if doesn't exist
+            if not os.path.exists(".gitignore"):
+                with open(".gitignore", "w") as f:
+                    f.write("""# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+*.tmp
+*.bak
+""")
+                print("📁 Created .gitignore file")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to initialize Git repository: {e}")
+            return False
+    return False
+
+def create_initial_commit(commit_message="Initial commit"):
+    """Create initial commit if no commits exist"""
+    try:
+        # Check if there are any commits
+        result = subprocess.run(["git", "rev-list", "--count", "HEAD"], 
+                              stdout=subprocess.PIPE, 
+                              stderr=subprocess.PIPE,
+                              text=True)
+        commit_count = int(result.stdout.strip()) if result.stdout.strip().isdigit() else 0
+        
+        if commit_count == 0:
+            print("📦 Creating initial commit")
+            subprocess.run(["git", "add", "."], check=True)
+            subprocess.run(["git", "commit", "-m", commit_message], check=True)
+            return True
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to create initial commit: {e}")
+        return False
+
+def create_with_gh_cli(repo_name, private=False, description="", commit_message="Initial commit"):
+    """Create and push to new repository using GitHub CLI"""
+    try:
+        # First ensure we have a Git repository
+        if not os.path.exists(".git"):
+            if not initialize_git_repository():
+                return False
+        
+        # Create initial commit if needed
+        if not create_initial_commit(commit_message):
+            print("ℹ️ Using existing commits")
+
+        private_flag = "--private" if private else "--public"
+        cmd = [
+            "gh", "repo", "create", repo_name,
+            private_flag,
+            "--source=.",
+            "--remote=origin",
+            "--push"
+        ]
+        
+        if description:
+            cmd.extend(["--description", description])
+        
+        print("🚀 Creating repository and pushing code...")
+        result = subprocess.run(cmd, check=True)
+        
+        if result.returncode == 0:
+            # Get the repo URL
+            url_result = subprocess.run(
+                ["gh", "repo", "view", "--json", "url", "--jq", ".url"],
+                stdout=subprocess.PIPE,
+                text=True,
+                check=True
+            )
+            repo_url = url_result.stdout.strip()
+            print(f"✅ Successfully created repository: {repo_url}")
+            return True
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to create repository: {e.stderr if e.stderr else 'Unknown error'}")
+        return False
+    except Exception as e:
+        print(f"❌ Unexpected error: {str(e)}")
+        return False
+
+def standard_git_push(commit_message, branch, remote, force=False, tags=False):
+    """Handle standard git push operations"""
+    try:
+        # Stage all changes
+        subprocess.run(["git", "add", "."], check=True)
+        
+        # Commit if message provided
+        if commit_message:
+            print(f"📦 Committing: '{commit_message}'")
+            subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        else:
+            print("ℹ️ No commit message provided - skipping commit")
+        
+        # Build push command
+        push_cmd = ["git", "push"]
+        if force:
+            push_cmd.append("--force-with-lease")
+        if tags:
+            push_cmd.append("--tags")
+        if remote and branch:
+            push_cmd.extend([remote, branch])
+        
+        print(f"🚀 Executing: {' '.join(push_cmd)}")
+        subprocess.run(push_cmd, check=True)
+        print("✅ Successfully pushed changes")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Push failed: {e}")
+        return False
 
 def run():
     parser = argparse.ArgumentParser(
-        description="📦 Simple CLI to automate git operations and GitHub repository creation."
+        description="🚀 Supercharged Git push tool with GitHub repo creation",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  Standard push:         gitpush_tool "Commit message"
+  Create new repo:       gitpush_tool "Initial commit" --new-repo project-name
+  Private repository:    gitpush_tool --new-repo private-project --private
+  Force push:            gitpush_tool "Fix critical bug" --force
+"""
     )
-    parser.add_argument("commit", nargs="?", help="Commit message. If omitted, no commit will be made.")
-    parser.add_argument("branch", nargs="?", default="main", help="Branch to push to (default: main).")
-    parser.add_argument("remote", nargs="?", default="origin", help="Remote name (default: origin).")
-    parser.add_argument("--force", action="store_true", help="Force push (use with caution).")
-    parser.add_argument("--tags", action="store_true", help="Push all local tags.")
-    parser.add_argument("--init", action="store_true", help="Run 'git init' before pushing.")
-    parser.add_argument("--new-repo", metavar="REPO_NAME", help="Create a new GitHub repository with this name.")
-    parser.add_argument("--private", action="store_true", help="Make the new repository private.")
-    parser.add_argument("--description", help="Description for the new repository.")
+    parser.add_argument("commit", nargs="?", help="Commit message")
+    parser.add_argument("branch", nargs="?", default="main", help="Branch name (default: main)")
+    parser.add_argument("remote", nargs="?", default="origin", help="Remote name (default: origin)")
+    parser.add_argument("--force", action="store_true", help="Force push with --force-with-lease")
+    parser.add_argument("--tags", action="store_true", help="Push tags")
+    parser.add_argument("--init", action="store_true", help="Initialize git repo")
+    parser.add_argument("--new-repo", metavar="NAME", help="Create new GitHub repository")
+    parser.add_argument("--private", action="store_true", help="Make repository private")
+    parser.add_argument("--description", help="Repository description")
 
     args = parser.parse_args()
 
-    # Create new GitHub repository if requested
     if args.new_repo:
-        print(f"🆕 Creating new GitHub repository: {args.new_repo}")
-        repo_url = create_github_repo(
-            args.new_repo,
-            private=args.private,
-            description=args.description or ""
-        )
-        if not repo_url:
+        print(f"🆕 Creating repository: {args.new_repo}")
+        
+        if not check_gh_installed():
+            print("❌ GitHub CLI (gh) is not installed")
+            print("Please install it first:")
+            print("  Mac (Homebrew): brew install gh")
+            print("  Windows (Winget): winget install --id GitHub.cli")
+            print("  Linux: See https://github.com/cli/cli#installation")
             sys.exit(1)
         
-        print(f"✅ Repository created: {repo_url}")
+        if not gh_authenticated():
+            if not authenticate_with_gh():
+                sys.exit(1)
         
-        # Initialize git if not already a repo
-        if not os.path.exists(".git"):
-            args.init = True
-        
-        # Set up git remote
-        os.system(f"git remote add {args.remote} {repo_url}")
-
-    if args.init:
-        print("🛠 Initializing git repository...")
-        os.system("git init")
-
-    os.system("git add .")
-
-    if args.commit:
-        print(f"📦 Committing with message: '{args.commit}'")
-        os.system(f'git commit -m "{args.commit}"')
+        commit_msg = args.commit if args.commit else "Initial commit"
+        if not create_with_gh_cli(
+            args.new_repo,
+            private=args.private,
+            description=args.description or "",
+            commit_message=commit_msg
+        ):
+            sys.exit(1)
+    elif args.init:
+        if initialize_git_repository():
+            create_initial_commit(args.commit or "Initial commit")
     else:
-        print("⚠️  No commit message provided. Skipping commit step.")
+        # Standard git push operation
+        if not standard_git_push(
+            args.commit,
+            args.branch,
+            args.remote,
+            args.force,
+            args.tags
+        ):
+            sys.exit(1)
 
-    push_cmd = "git push"
-
-    if args.force:
-        push_cmd += " --force-with-lease"
-
-    if args.tags:
-        push_cmd += " --tags"
-
-    if args.remote and args.branch:
-        push_cmd += f" {args.remote} {args.branch}"
-    elif args.branch:
-        push_cmd += f" origin {args.branch}"
-
-    print(f"🚀 Running: {push_cmd}")
-    os.system(push_cmd)
+if __name__ == "__main__":
+    run()

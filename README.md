@@ -1,142 +1,182 @@
-# `gitpush_tool`
+# GitPush Tool 🚀
 
-[![CI/CD Status](https://github.com/your-username/gitpush_tool/actions/workflows/main.yml/badge.svg)](https://github.com/your-username/gitpush_tool/actions/workflows/main.yml)
-[![PyPI version](https://badge.fury.io/py/gitpush_tool.svg)](https://pypi.org/project/gitpush_tool/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PyPI version](https://img.shields.io/pypi/v/gitpush-tool.svg)](https://pypi.org/project/gitpush-tool/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-## About `gitpush_tool`
+A supercharged Git CLI tool that simplifies repository creation and pushing with intelligent defaults.
 
-`gitpush_tool` is a lightweight yet powerful command-line utility designed to streamline and simplify your Git push operations. In the fast-paced world of software development, repetitive or complex Git commands can hinder productivity. This tool aims to alleviate that by providing an intuitive interface and potentially advanced functionalities to manage your code pushes with greater ease and efficiency.
+## Features ✨
 
-Whether you're a seasoned developer managing multiple branches and remotes or a newcomer looking for a more forgiving way to interact with Git's push command, `gitpush_tool` offers a refined experience. It abstracts away some of the complexities of `git push`, allowing you to focus more on your code and less on command-line intricacies, ultimately enhancing your daily development workflow.
+- **One-command GitHub repo creation**
+- **Automatic Git initialization** for new projects
+- **Safe force pushing** (`--force-with-lease`)
+- **GitHub CLI integration** for secure authentication
+- **Fresh project setup** in one command
+- **Comprehensive error handling**
 
-## Features
-
-*   **Simplified Push Operations**: Execute common Git push commands with a more concise and user-friendly syntax.
-*   **Intelligent Defaults**: Potentially intelligent defaulting for common push scenarios (e.g., current branch, upstream remote).
-*   **Enhanced Workflow**: Designed to reduce keystrokes and potential errors during frequent push operations.
-*   **Python-based**: Easily installable and extensible within the Python ecosystem.
-*   **Lightweight**: Minimal dependencies, ensuring a small footprint and fast execution.
-
-## Installation
-
-`gitpush_tool` is a Python package and can be easily installed using `pip`.
-
-### Using `pip` (Recommended)
-
-To install the latest stable version from PyPI:
+## Installation 📦
 
 ```bash
-pip install gitpush_tool
+pip install gitpush-tool
 ```
 
-### From Source
+### Prerequisites
 
-If you want to install the latest development version or contribute to the project, you can install it directly from the source:
+- GitHub CLI (gh)
+- Git
 
 ```bash
-git clone https://github.com/your-username/gitpush_tool.git
-cd gitpush_tool
-pip install .
+# Install GitHub CLI
+# macOS
+brew install gh
+
+# Windows
+winget install --id GitHub.cli
+
+# Linux (Debian/Ubuntu)
+sudo apt install gh
 ```
 
-For development purposes, you might want to install it in editable mode:
+## Usage 🛠️
+
+### Basic Commands
+
+| Command | Description |
+|--------|-------------|
+| `gitpush_tool "Commit message"` | Standard push with commit |
+| `gitpush_tool` | Push without commit (only staged changes) |
+| `gitpush_tool --force` | Safe force push |
+| `gitpush_tool --tags` | Push all tags |
+
+### New Repository Workflow
 
 ```bash
-pip install -e .
+# Create new public repo
+gitpush_tool "Initial commit" --new-repo project-name
+
+# Create private repo with description
+gitpush_tool "Initial commit" --new-repo private-project --private --description "My awesome project"
 ```
 
-## Usage
-
-Once installed, `gitpush_tool` can be invoked from your terminal. Its primary purpose is to simplify the `git push` command. The exact arguments and behaviors will depend on the tool's implementation, but here are some illustrative examples based on common Git push patterns:
-
-### Basic Push
-
-To push your current branch to its configured upstream remote:
+### Branch Management
 
 ```bash
-gitpush_tool
+# Push to specific branch
+gitpush_tool "Commit message" feature-branch
+
+# Push to specific remote and branch
+gitpush_tool "Commit message" main upstream
 ```
 
-### Pushing a Specific Branch
-
-To push a specific local branch (`feature/xyz`) to its default remote:
+### Initialization
 
 ```bash
-gitpush_tool feature/xyz
+# Initialize new repo only
+gitpush_tool --init
 ```
 
-### Pushing to a Specific Remote and Branch
+## Workflow Examples 🔥
 
-To push your current branch to a specific remote (`origin`) and branch (`main`):
+### Scenario 1: Fresh Project Setup
 
 ```bash
-gitpush_tool origin main
+mkdir my-app
+cd my-app
+touch README.md main.py
+gitpush_tool "Initial commit" --new-repo my-app
 ```
 
-### Force Push (with caution!)
-
-To perform a force push (e.g., using `--force-with-lease` for safety):
+### Scenario 2: Existing Project Updates
 
 ```bash
-gitpush_tool --force
-# or, if the tool provides a safer alias
-gitpush_tool --force-lease
+# After making changes
+gitpush_tool "Fixed authentication bug"
+
+# Force push after rebase
+gitpush_tool "Rebased commits" --force
 ```
 
-### Pushing Tags
-
-To push all local tags:
+### Scenario 3: Create Empty Repository
 
 ```bash
-gitpush_tool --tags
+mkdir empty-project
+cd empty-project
+gitpush_tool --init
 ```
 
-<<<<<<< HEAD
-### Creating and Pushing to a New GitHub Repository
+## Configuration ⚙️
 
-To create a new GitHub repository and push your code in one command:
+The tool uses GitHub CLI (gh) for authentication. On first use:
+
+- It will prompt you to authenticate via browser
+- Follow the on-screen instructions
+- Authentication persists for future uses
+
+## Troubleshooting 🛑
+
+### Common Issues
+
+**Error: GitHub CLI not found**
 
 ```bash
-gitpush_tool "Initial commit" --new-repo my-new-repo --description "My awesome project"
-
-=======
->>>>>>> d1625633dae3f9eec5bfc0bc8727dd2f8bd2e98c
-### Help
-
-To view all available commands and options:
-
-```bash
-gitpush_tool --help
+❌ GitHub CLI (gh) is not installed
+➡️ Install GitHub CLI using the installation guide
 ```
 
-*Note: The actual commands and their effects depend on the specific logic implemented within `gitpush_tool/cli.py`. Please refer to the tool's `--help` output for precise usage details.*
+**Error: Authentication failed**
 
-## Configuration
+```bash
+❌ Authentication failed
+➡️ Run gh auth login separately to debug
+```
 
-`gitpush_tool` primarily relies on command-line arguments for its operation. Based on the project analysis, there are no specific user-facing configuration files (like `.gitpushrc` or similar) detected that would require manual editing by the user for runtime behavior. `pyproject.toml` and `setup.py` are used for project building and packaging, not for end-user runtime configuration.
+**Error: No commits found**
 
-Any configuration or default behaviors would typically be set through environmental variables or command-line flags. Consult the `--help` output for any such options.
+```bash
+❌ Failed to create initial commit
+➡️ Make sure you have files in your directory before pushing
+```
 
-## API Documentation
+**Error: Repository already exists**
 
-`gitpush_tool` is designed as a command-line interface (CLI) tool for direct user interaction. It is not intended to be used as a Python library with an exposed API for import into other Python projects. Its functionality is accessible exclusively via the terminal.
+```bash
+❌ Repository 'my-repo' already exists
+➡️ Choose a different repository name or delete the existing one
+```
 
-## Contributing
+## Advanced Options 🧠
 
-We welcome contributions to `gitpush_tool`! If you have suggestions for improvements, bug reports, or want to contribute code, please follow these steps:
+| Option | Description |
+|--------|-------------|
+| `--private` | Create private repository |
+| `--description "TEXT"` | Set repository description |
+| `--force` | Force push with lease |
+| `--tags` | Include tags in push |
+| `--init` | Initialize Git repo only |
 
-1.  **Fork** the repository on GitHub.
-2.  **Clone** your forked repository: `git clone https://github.com/your-username/gitpush_tool.git`
-3.  **Create a new branch**: `git checkout -b feature/your-feature-name` or `bugfix/issue-description`
-4.  **Make your changes**.
-5.  **Test your changes** thoroughly.
-6.  **Commit your changes**: `git commit -m "feat: Add new awesome feature"` (please use conventional commits if possible).
-7.  **Push to your branch**: `git push origin feature/your-feature-name`
-8.  **Open a Pull Request** against the `main` branch of the original repository.
+## FAQ ❓
 
-Please ensure your code adheres to good coding practices and includes relevant tests.
+**Q: Can I use this with existing repositories?**  
+A: Yes! It works normally with existing repos like regular git push.
 
-## License
+**Q: How is this different from regular Git?**  
+A: It automates the tedious setup (init, first commit, remote creation) and provides safer defaults.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**Q: Can I customize the .gitignore?**  
+A: Yes! The tool creates a basic .gitignore but you can modify it afterward.
+
+## Contributing 🤝
+
+Contributions welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+## License 📄
+
+MIT - See LICENSE for details.
+
+<center>✨ <strong>Happy Coding!</strong> ✨</center>

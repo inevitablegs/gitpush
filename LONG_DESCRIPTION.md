@@ -1,32 +1,3 @@
-Metadata-Version: 2.4
-Name: gitpush-tool
-Version: 0.2.5
-Summary: Supercharged Git push tool with automatic GitHub repo creation and pushing
-Home-page: https://github.com/inevitablegs/gitpush
-Author: Ganesh Sonawane
-Author-email: sonawaneganu3101@gmail.com
-License: MIT
-Project-URL: Documentation, https://github.com/inevitablegs/gitpush
-Project-URL: Source, https://github.com/inevitablegs/gitpush
-Project-URL: Tracker, https://github.com/inevitablegs/gitpush/issues
-Classifier: Programming Language :: Python :: 3
-Classifier: License :: OSI Approved :: MIT License
-Classifier: Operating System :: OS Independent
-Requires-Python: >=3.6
-Description-Content-Type: text/markdown
-License-File: LICENSE
-Dynamic: author
-Dynamic: author-email
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: license
-Dynamic: license-file
-Dynamic: project-url
-Dynamic: requires-python
-Dynamic: summary
-
 # GitPush Tool - Complete Documentation
 
 ## 📦 Installation
