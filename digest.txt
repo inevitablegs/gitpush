@@ -1,0 +1,105 @@
+Directory structure:
+└── gitpush_tool/
+    ├── README.md
+    ├── LICENSE
+    ├── pyproject.toml
+    ├── setup.py
+    └── gitpush_tool/
+        ├── __init__.py
+        └── cli.py
+
+================================================
+FILE: README.md
+================================================
+# gitpush_tool
+
+[![Python Version](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](https://github.com/your_username/gitpush_tool/actions)
+[![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/your_username/gitpush_tool/actions)
+
+## 
+
+
+================================================
+FILE: LICENSE
+================================================
+
+---
+
+## ðŸ“„ `LICENSE` (MIT)
+```txt
+MIT License
+
+Copyright (c) 2025 Ganesh Sonawane
+
+
+
+================================================
+FILE: pyproject.toml
+================================================
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+
+================================================
+FILE: setup.py
+================================================
+from setuptools import setup, find_packages
+from pathlib import Path
+
+setup(
+    name="gitpush",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[],
+    entry_points={
+        "console_scripts": [
+            "gitpush=gitpush.cli:run"
+        ],
+    },
+    author="Ganesh Sonawane",
+    author_email="sonawaneganu3101@example.com",
+    description="A simple CLI tool to push git commits with a single command.",
+    long_description=Path("README.md").read_text(encoding="utf-8"),
+    long_description_content_type="text/markdown",
+    url="https://github.com/yourusername/gitpush",
+    license="MIT",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.6",
+)
+
+
+
+================================================
+FILE: gitpush_tool/__init__.py
+================================================
+__version__ = "0.1.0"
+
+
+================================================
+FILE: gitpush_tool/cli.py
+================================================
+import os
+import sys
+
+def run():
+    if len(sys.argv) < 2:
+        print("❌ Please provide a commit message.")
+        print("✅ Example: gitpush 'Initial commit'")
+        sys.exit(1)
+
+    commit_message = sys.argv[1]
+
+    os.system("git init")
+    os.system("git add .")
+    os.system(f'git commit -m "{commit_message}"')
+    os.system("git push")
+
+

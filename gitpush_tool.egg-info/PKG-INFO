@@ -1,3 +1,28 @@
+Metadata-Version: 2.4
+Name: gitpush-tool
+Version: 0.1.1
+Summary: A CLI tool to simplify Git push operations with intelligent defaults and options.
+Home-page: https://github.com/yourusername/gitpush_tool
+Author: Ganesh Sonawane
+Author-email: sonawaneganu3101@example.com
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
 # `gitpush_tool`
 
 [![CI/CD Status](https://github.com/your-username/gitpush_tool/actions/workflows/main.yml/badge.svg)](https://github.com/your-username/gitpush_tool/actions/workflows/main.yml)
