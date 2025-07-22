@@ -6,7 +6,7 @@ long_description = (Path(__file__).parent / "LONG_DESCRIPTION.md").read_text(enc
 
 setup(
     name="gitpush-tool",
-    version="0.2.6",
+    version="0.2.7",
     packages=find_packages(),
     install_requires=[],
     entry_points={
