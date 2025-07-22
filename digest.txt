@@ -1,0 +1,622 @@
+Directory structure:
+└── gitpush_tool/
+    ├── README.md
+    ├── LICENSE
+    ├── LONG_DESCRIPTION.md
+    ├── MANIFEST.in
+    ├── pyproject.toml
+    ├── setup.py
+    └── gitpush_tool/
+        ├── __doc__.py
+        ├── __init__.py
+        └── cli.py
+
+================================================
+FILE: README.md
+================================================
+# GitPush Tool 🚀
+
+[![PyPI version](https://img.shields.io/pypi/v/gitpush-tool.svg)](https://pypi.org/project/gitpush-tool/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+A supercharged Git CLI tool that simplifies repository creation and pushing with intelligent defaults.
+
+## Features ✨
+
+- **One-command GitHub repo creation**
+- **Automatic Git initialization** for new projects
+- **Safe force pushing** (`--force-with-lease`)
+- **GitHub CLI integration** for secure authentication
+- **Fresh project setup** in one command
+- **Comprehensive error handling**
+
+## Installation 📦
+
+```bash
+pip install gitpush-tool
+```
+
+### Prerequisites
+
+- GitHub CLI (gh)
+- Git
+
+```bash
+# Install GitHub CLI
+# macOS
+brew install gh
+
+# Windows
+winget install --id GitHub.cli
+
+# Linux (Debian/Ubuntu)
+sudo apt install gh
+```
+
+## Usage 🛠️
+
+### Basic Commands
+
+| Command | Description |
+|--------|-------------|
+| `gitpush_tool "Commit message"` | Standard push with commit |
+| `gitpush_tool` | Push without commit (only staged changes) |
+| `gitpush_tool --force` | Safe force push |
+| `gitpush_tool --tags` | Push all tags |
+
+### New Repository Workflow
+
+```bash
+# Create new public repo
+gitpush_tool "Initial commit" --new-repo project-name
+
+# Create private repo with description
+gitpush_tool "Initial commit" --new-repo private-project --private --description "My awesome project"
+```
+
+### Branch Management
+
+```bash
+# Push to specific branch
+gitpush_tool "Commit message" feature-branch
+
+# Push to specific remote and branch
+gitpush_tool "Commit message" main upstream
+```
+
+### Initialization
+
+```bash
+# Initialize new repo only
+gitpush_tool --init
+```
+
+## Workflow Examples 🔥
+
+### Scenario 1: Fresh Project Setup
+
+```bash
+mkdir my-app
+cd my-app
+touch README.md main.py
+gitpush_tool "Initial commit" --new-repo my-app
+```
+
+### Scenario 2: Existing Project Updates
+
+```bash
+# After making changes
+gitpush_tool "Fixed authentication bug"
+
+# Force push after rebase
+gitpush_tool "Rebased commits" --force
+```
+
+### Scenario 3: Create Empty Repository
+
+```bash
+mkdir empty-project
+cd empty-project
+gitpush_tool --init
+```
+
+## Configuration ⚙️
+
+The tool uses GitHub CLI (gh) for authentication. On first use:
+
+- It will prompt you to authenticate via browser
+- Follow the on-screen instructions
+- Authentication persists for future uses
+
+## Troubleshooting 🛑
+
+### Common Issues
+
+**Error: GitHub CLI not found**
+
+```bash
+❌ GitHub CLI (gh) is not installed
+➡️ Install GitHub CLI using the installation guide
+```
+
+**Error: Authentication failed**
+
+```bash
+❌ Authentication failed
+➡️ Run gh auth login separately to debug
+```
+
+**Error: No commits found**
+
+```bash
+❌ Failed to create initial commit
+➡️ Make sure you have files in your directory before pushing
+```
+
+**Error: Repository already exists**
+
+```bash
+❌ Repository 'my-repo' already exists
+➡️ Choose a different repository name or delete the existing one
+```
+
+## Advanced Options 🧠
+
+| Option | Description |
+|--------|-------------|
+| `--private` | Create private repository |
+| `--description "TEXT"` | Set repository description |
+| `--force` | Force push with lease |
+| `--tags` | Include tags in push |
+| `--init` | Initialize Git repo only |
+
+## FAQ ❓
+
+**Q: Can I use this with existing repositories?**  
+A: Yes! It works normally with existing repos like regular git push.
+
+**Q: How is this different from regular Git?**  
+A: It automates the tedious setup (init, first commit, remote creation) and provides safer defaults.
+
+**Q: Can I customize the .gitignore?**  
+A: Yes! The tool creates a basic .gitignore but you can modify it afterward.
+
+## Contributing 🤝
+
+Contributions welcome! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Open a pull request
+
+## License 📄
+
+MIT - See LICENSE for details.
+
+<center>✨ <strong>Happy Coding!</strong> ✨</center>
+
+
+================================================
+FILE: LICENSE
+================================================
+MIT License
+
+Copyright (c) 2025 Ganesh Sonawane
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+================================================
+FILE: LONG_DESCRIPTION.md
+================================================
+# GitPush Tool - Complete Documentation
+
+## 📦 Installation
+```bash
+pip install gitpush-tool
+gh auth login  # Authenticate with GitHub
+```
+
+## 🚀 Core Features
+
+### 1. New Repository Creation
+```bash
+# Create public repo
+gitpush_tool "Initial commit" --new-repo my-project
+
+# Create private repo
+gitpush_tool "Initial commit" --new-repo private-project --private
+```
+
+### 2. Standard Git Operations
+```bash
+# Regular push
+gitpush_tool "Fixed login bug"
+
+# Force push
+gitpush_tool "Rebased history" --force
+
+# Push tags
+gitpush_tool --tags
+```
+
+## ⚙️ Configuration
+
+The tool automatically:
+1. Creates `.gitignore` with sensible defaults
+2. Sets main branch as default
+3. Uses GitHub CLI for secure auth
+
+## 🐛 Common Issues
+
+**"Repository already exists"**
+```bash
+❌ Repository 'my-repo' already exists
+```
+Solution: Use different name or delete existing repo
+
+**"Authentication failed"**
+```bash
+❌ Failed to authenticate with GitHub
+```
+Solution: Run `gh auth login` separately
+
+## 📝 License
+MIT Licensed - Free for personal and commercial use
+
+
+================================================
+FILE: MANIFEST.in
+================================================
+include LICENSE
+include README.md
+
+
+================================================
+FILE: pyproject.toml
+================================================
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
+
+================================================
+FILE: setup.py
+================================================
+from setuptools import setup, find_packages
+from pathlib import Path
+
+# Read long description
+long_description = (Path(__file__).parent / "LONG_DESCRIPTION.md").read_text(encoding="utf-8")
+
+setup(
+    name="gitpush-tool",
+    version="0.2.5",
+    packages=find_packages(),
+    install_requires=[],
+    entry_points={
+        "console_scripts": [
+            "gitpush_tool=gitpush_tool.cli:run"
+        ],
+    },
+    author="Ganesh Sonawane",
+    author_email="sonawaneganu3101@gmail.com",
+    description="Supercharged Git push tool with automatic GitHub repo creation and pushing",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    url="https://github.com/inevitablegs/gitpush",
+    license="MIT",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.6",
+    include_package_data=True,
+    project_urls={
+        "Documentation": "https://github.com/inevitablegs/gitpush",
+        "Source": "https://github.com/inevitablegs/gitpush",
+        "Tracker": "https://github.com/inevitablegs/gitpush/issues",
+    },
+)
+
+
+================================================
+FILE: gitpush_tool/__doc__.py
+================================================
+"""
+GitPush Tool - Supercharged Git CLI (v0.2.0)
+
+A powerful command-line tool that simplifies Git operations with automatic GitHub repository creation.
+
+Key Features:
+â€¢ One-command GitHub repo creation
+â€¢ Automatic Git initialization
+â€¢ Safe force pushing (--force-with-lease)
+â€¢ GitHub CLI integration
+â€¢ Fresh project setup in one command
+
+Basic Usage:
+  gitpush_tool "Commit message"              # Standard push
+  gitpush_tool --new-repo project-name       # Create new repo
+  gitpush_tool --force                       # Safe force push
+
+Install GitHub CLI first:
+  macOS: brew install gh
+  Windows: winget install GitHub.cli
+  Linux: sudo apt install gh
+
+Documentation: https://github.com/inevitablegs/gitpush
+Issues: https://github.com/inevitablegs/gitpush/issues
+"""
+
+
+================================================
+FILE: gitpush_tool/__init__.py
+================================================
+__version__ = "0.2.5"
+
+
+
+================================================
+FILE: gitpush_tool/cli.py
+================================================
+#!/usr/bin/env python3
+import os
+import argparse
+import sys
+import subprocess
+from datetime import datetime
+
+def check_gh_installed():
+    """Check if GitHub CLI is installed"""
+    try:
+        subprocess.run(["gh", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except:
+        return False
+
+def gh_authenticated():
+    """Check if user is authenticated with GitHub CLI"""
+    try:
+        result = subprocess.run(["gh", "auth", "status"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.returncode == 0
+    except:
+        return False
+
+def authenticate_with_gh():
+    """Authenticate user with GitHub CLI"""
+    print("\n🔑 GitHub authentication required")
+    print("We'll use the GitHub CLI (gh) for authentication")
+    print("This will open your browser for secure login")
+    
+    try:
+        subprocess.run(["gh", "auth", "login", "--web", "-h", "github.com"], check=True)
+        return True
+    except subprocess.CalledProcessError:
+        print("❌ Authentication failed")
+        return False
+    except FileNotFoundError:
+        print("❌ GitHub CLI not found")
+        return False
+
+def initialize_git_repository():
+    """Initialize git repository if not already initialized"""
+    if not os.path.exists(".git"):
+        print("🛠 Initializing git repository")
+        try:
+            subprocess.run(["git", "init"], check=True)
+            subprocess.run(["git", "branch", "-M", "main"], check=True)
+            
+            # Create basic .gitignore if doesn't exist
+            if not os.path.exists(".gitignore"):
+                with open(".gitignore", "w") as f:
+                    f.write("""# Python
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+*.tmp
+*.bak
+""")
+                print("📁 Created .gitignore file")
+            return True
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Failed to initialize Git repository: {e}")
+            return False
+    return False
+
+def create_initial_commit(commit_message="Initial commit"):
+    """Create initial commit if no commits exist"""
+    try:
+        # Check if there are any commits
+        result = subprocess.run(["git", "rev-list", "--count", "HEAD"], 
+                              stdout=subprocess.PIPE, 
+                              stderr=subprocess.PIPE,
+                              text=True)
+        commit_count = int(result.stdout.strip()) if result.stdout.strip().isdigit() else 0
+        
+        if commit_count == 0:
+            print("📦 Creating initial commit")
+            subprocess.run(["git", "add", "."], check=True)
+            subprocess.run(["git", "commit", "-m", commit_message], check=True)
+            return True
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to create initial commit: {e}")
+        return False
+
+def create_with_gh_cli(repo_name, private=False, description="", commit_message="Initial commit"):
+    """Create and push to new repository using GitHub CLI"""
+    try:
+        # First ensure we have a Git repository
+        if not os.path.exists(".git"):
+            if not initialize_git_repository():
+                return False
+        
+        # Create initial commit if needed
+        if not create_initial_commit(commit_message):
+            print("ℹ️ Using existing commits")
+
+        private_flag = "--private" if private else "--public"
+        cmd = [
+            "gh", "repo", "create", repo_name,
+            private_flag,
+            "--source=.",
+            "--remote=origin",
+            "--push"
+        ]
+        
+        if description:
+            cmd.extend(["--description", description])
+        
+        print("🚀 Creating repository and pushing code...")
+        result = subprocess.run(cmd, check=True)
+        
+        if result.returncode == 0:
+            # Get the repo URL
+            url_result = subprocess.run(
+                ["gh", "repo", "view", "--json", "url", "--jq", ".url"],
+                stdout=subprocess.PIPE,
+                text=True,
+                check=True
+            )
+            repo_url = url_result.stdout.strip()
+            print(f"✅ Successfully created repository: {repo_url}")
+            return True
+        return False
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to create repository: {e.stderr if e.stderr else 'Unknown error'}")
+        return False
+    except Exception as e:
+        print(f"❌ Unexpected error: {str(e)}")
+        return False
+
+def standard_git_push(commit_message, branch, remote, force=False, tags=False):
+    """Handle standard git push operations"""
+    try:
+        # Stage all changes
+        subprocess.run(["git", "add", "."], check=True)
+        
+        # Commit if message provided
+        if commit_message:
+            print(f"📦 Committing: '{commit_message}'")
+            subprocess.run(["git", "commit", "-m", commit_message], check=True)
+        else:
+            print("ℹ️ No commit message provided - skipping commit")
+        
+        # Build push command
+        push_cmd = ["git", "push"]
+        if force:
+            push_cmd.append("--force-with-lease")
+        if tags:
+            push_cmd.append("--tags")
+        if remote and branch:
+            push_cmd.extend([remote, branch])
+        
+        print(f"🚀 Executing: {' '.join(push_cmd)}")
+        subprocess.run(push_cmd, check=True)
+        print("✅ Successfully pushed changes")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Push failed: {e}")
+        return False
+
+def run():
+    parser = argparse.ArgumentParser(
+        description="🚀 Supercharged Git push tool with GitHub repo creation",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""Examples:
+  Standard push:         gitpush_tool "Commit message"
+  Create new repo:       gitpush_tool "Initial commit" --new-repo project-name
+  Private repository:    gitpush_tool --new-repo private-project --private
+  Force push:            gitpush_tool "Fix critical bug" --force
+"""
+    )
+    parser.add_argument("commit", nargs="?", help="Commit message")
+    parser.add_argument("branch", nargs="?", default="main", help="Branch name (default: main)")
+    parser.add_argument("remote", nargs="?", default="origin", help="Remote name (default: origin)")
+    parser.add_argument("--force", action="store_true", help="Force push with --force-with-lease")
+    parser.add_argument("--tags", action="store_true", help="Push tags")
+    parser.add_argument("--init", action="store_true", help="Initialize git repo")
+    parser.add_argument("--new-repo", metavar="NAME", help="Create new GitHub repository")
+    parser.add_argument("--private", action="store_true", help="Make repository private")
+    parser.add_argument("--description", help="Repository description")
+
+    args = parser.parse_args()
+
+    if args.new_repo:
+        print(f"🆕 Creating repository: {args.new_repo}")
+        
+        if not check_gh_installed():
+            print("❌ GitHub CLI (gh) is not installed")
+            print("Please install it first:")
+            print("  Mac (Homebrew): brew install gh")
+            print("  Windows (Winget): winget install --id GitHub.cli")
+            print("  Linux: See https://github.com/cli/cli#installation")
+            sys.exit(1)
+        
+        if not gh_authenticated():
+            if not authenticate_with_gh():
+                sys.exit(1)
+        
+        commit_msg = args.commit if args.commit else "Initial commit"
+        if not create_with_gh_cli(
+            args.new_repo,
+            private=args.private,
+            description=args.description or "",
+            commit_message=commit_msg
+        ):
+            sys.exit(1)
+    elif args.init:
+        if initialize_git_repository():
+            create_initial_commit(args.commit or "Initial commit")
+    else:
+        # Standard git push operation
+        if not standard_git_push(
+            args.commit,
+            args.branch,
+            args.remote,
+            args.force,
+            args.tags
+        ):
+            sys.exit(1)
+
+if __name__ == "__main__":
+    run()
+

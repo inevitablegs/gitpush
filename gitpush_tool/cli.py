@@ -1,17 +1,40 @@
-#!/usr/bin/env python3
+
 import os
 import argparse
 import sys
 import subprocess
 from datetime import datetime
+import os
+import subprocess
+import platform
+import urllib.request
+import tempfile
+import shutil
 
 def check_gh_installed():
-    """Check if GitHub CLI is installed"""
-    try:
-        subprocess.run(["gh", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if shutil.which("gh"):
         return True
-    except:
+
+    print("📦 GitHub CLI not found. Attempting installation...")
+
+    system = platform.system()
+    try:
+        if system == "Windows":
+            return install_gh_cli_windows()
+        elif system == "Darwin":
+            subprocess.run(["brew", "install", "gh"], check=True)
+            return shutil.which("gh") is not None
+        elif system == "Linux":
+            subprocess.run(["sudo", "apt", "install", "-y", "gh"], check=True)
+            return shutil.which("gh") is not None
+        else:
+            print("❌ Unsupported OS.")
+            return False
+    except Exception as e:
+        print(f"❌ Failed to install GitHub CLI: {e}")
         return False
+
+
 
 def gh_authenticated():
     """Check if user is authenticated with GitHub CLI"""
@@ -175,6 +198,104 @@ def standard_git_push(commit_message, branch, remote, force=False, tags=False):
         print(f"❌ Push failed: {e}")
         return False
 
+
+import subprocess
+import shutil
+import os
+import sys
+import platform
+import tempfile
+import urllib.request
+
+def is_gh_installed():
+    return shutil.which("gh") is not None
+
+def install_gh_windows():
+    print("📦 GitHub CLI not found. Attempting installation on Windows...")
+    
+    # Try winget first
+    if shutil.which("winget"):
+        print("👉 Installing via winget...")
+        try:
+            subprocess.run(["winget", "install", "--id", "GitHub.cli", "--silent", "--accept-package-agreements", "--accept-source-agreements"], check=True)
+            return shutil.which("gh") is not None
+        except subprocess.CalledProcessError:
+            print("⚠️ winget installation failed.")
+    
+    # Fallback to direct MSI download
+    print("⚠️ winget not available or failed. Trying direct download...")
+    gh_url = "https://github.com/cli/cli/releases/latest/download/gh_2.76.0_windows_amd64.msi"
+    installer_path = os.path.join(tempfile.gettempdir(), "gh_installer.msi")
+    try:
+        print("⬇️ Downloading GitHub CLI installer...")
+        urllib.request.urlretrieve(gh_url, installer_path)
+        print("📥 Running installer...")
+        subprocess.run(["msiexec", "/i", installer_path, "/quiet", "/qn", "/norestart"], check=True)
+        return shutil.which("gh") is not None
+    except Exception as e:
+        print(f"❌ Direct installation failed: {e}")
+        return False
+
+def ensure_gh():
+    if is_gh_installed():
+        print("✅ GitHub CLI is already installed.")
+        return True
+
+    if platform.system() == "Windows":
+        success = install_gh_windows()
+    else:
+        print("❌ Automatic installation not supported on this OS. Please install manually.")
+        success = False
+
+    if not success:
+        print("❌ GitHub CLI (gh) is not installed")
+        print("Please install it manually:")
+        print("  Mac: brew install gh")
+        print("  Windows: winget install --id GitHub.cli")
+        print("  Linux: https://github.com/cli/cli#installation")
+        return False
+
+    return True
+
+# ✅ Call this before using gh in your code
+if ensure_gh():
+    # You can proceed to use `gh`, like:
+    subprocess.run(["gh", "auth", "login"])
+
+
+def install_gh_cli_windows():
+    """Install GitHub CLI on Windows using winget or direct download"""
+    print("📦 GitHub CLI not found. Attempting installation on Windows...")
+
+    # First, try using winget
+    try:
+        subprocess.run(["winget", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        print("👉 Installing via winget...")
+        subprocess.run(["winget", "install", "--id", "GitHub.cli", "-e", "--silent"], check=True)
+        print("✅ GitHub CLI installed successfully via winget.")
+        return True
+    except Exception as e:
+        print("⚠️ winget not available or failed. Trying direct download...")
+
+    # Fallback: Direct download from GitHub
+    try:
+        print("⬇️ Downloading GitHub CLI installer...")
+        url = "https://github.com/cli/cli/releases/latest/download/gh_2.46.0_windows_amd64.msi"
+        temp_dir = tempfile.mkdtemp()
+        msi_path = os.path.join(temp_dir, "gh.msi")
+        urllib.request.urlretrieve(url, msi_path)
+
+        print("🛠 Installing GitHub CLI...")
+        subprocess.run(["msiexec", "/i", msi_path, "/quiet", "/norestart"], check=True)
+
+        shutil.rmtree(temp_dir)  # clean up
+        print("✅ GitHub CLI installed successfully via MSI.")
+        return True
+    except Exception as e:
+        print(f"❌ Direct installation failed: {e}")
+        return False
+
+
 def run():
     parser = argparse.ArgumentParser(
         description="🚀 Supercharged Git push tool with GitHub repo creation",
@@ -234,6 +355,10 @@ def run():
             args.tags
         ):
             sys.exit(1)
+            
+            
+            
+
 
 if __name__ == "__main__":
     run()
