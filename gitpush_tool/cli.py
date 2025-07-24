@@ -31,26 +31,55 @@ def check_gh_installed():
         print(f"❌ Failed to install GitHub CLI: {e}")
         return False
 
+import os
+import subprocess
+import shutil
+import tempfile
+import urllib.request
+import json
+
 def install_gh_cli_windows():
     """Install GitHub CLI on Windows using winget or direct download"""
     # Try winget first
     if shutil.which("winget"):
         try:
+            print("📦 Attempting to install GitHub CLI with winget...")
             subprocess.run(["winget", "install", "--id", "GitHub.cli", "--silent"], check=True)
+            print("✅ GitHub CLI installed successfully via winget.")
             return True
-        except subprocess.CalledProcessError:
-            print("⚠️ winget installation failed.")
-    
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("⚠️ Winget installation failed. Falling back to direct download.")
+
     # Fallback to direct download
     try:
-        print("⬇️ Downloading GitHub CLI installer...")
-        url = "https://github.com/cli/cli/releases/latest/download/gh_2.46.0_windows_amd64.msi"
+        print("⬇️ Finding the latest GitHub CLI release for Windows...")
+        api_url = "https://api.github.com/repos/cli/cli/releases/latest"
+        with urllib.request.urlopen(api_url) as response:
+            data = json.loads(response.read().decode())
+
+        # Find the correct MSI asset
+        msi_url = None
+        for asset in data.get("assets", []):
+            if asset.get("name", "").endswith("_windows_amd64.msi"):
+                msi_url = asset.get("browser_download_url")
+                break
+
+        if not msi_url:
+            print("❌ Could not find a downloadable MSI file for the latest release.")
+            return False
+
         msi_path = os.path.join(tempfile.gettempdir(), "gh_installer.msi")
-        urllib.request.urlretrieve(url, msi_path)
-        
-        print("🛠 Installing GitHub CLI...")
+
+        print(f"⬇️ Downloading GitHub CLI from: {msi_url}")
+        urllib.request.urlretrieve(msi_url, msi_path)
+
+        print("🛠️ Installing GitHub CLI...")
+        # Use msiexec for silent installation
         subprocess.run(["msiexec", "/i", msi_path, "/quiet", "/norestart"], check=True)
-        os.remove(msi_path)  # Clean up
+
+        # Clean up the downloaded file
+        os.remove(msi_path)
+        print("✅ GitHub CLI installed successfully.")
         return True
     except Exception as e:
         print(f"❌ Direct installation failed: {e}")
