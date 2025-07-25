@@ -20,22 +20,6 @@ A supercharged Git CLI tool that simplifies repository creation and pushing with
 pip install gitpush-tool
 ```
 
-### Prerequisites
-
-- GitHub CLI (gh)
-- Git
-
-```bash
-# Install GitHub CLI
-# macOS
-brew install gh
-
-# Windows
-winget install --id GitHub.cli
-
-# Linux (Debian/Ubuntu)
-sudo apt install gh
-```
 
 ## Usage 🛠️
 
