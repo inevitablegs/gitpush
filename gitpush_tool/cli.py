@@ -5,52 +5,755 @@ import subprocess
 import shutil
 import platform
 
-def check_gh_installed():
-    """
-    Checks if GitHub CLI is installed. If not, it provides the user with
-    the best platform-specific command to install it manually.
-    """
+import os
+import sys
+import json
+import platform
+import shutil
+import tempfile
+import urllib.request
+import subprocess
+from typing import Optional, Tuple
+
+def check_gh_installed() -> bool:
+    """Check if GitHub CLI is installed with proper verification"""
     if shutil.which("gh"):
-        return True
-
-    print("❌ Error: GitHub CLI (gh) is not installed or not in your system's PATH.", file=sys.stderr)
-    print("   The '--new-repo' feature requires the GitHub CLI for all repository operations.", file=sys.stderr)
-
-    system = platform.system()
-    install_command = ""
-
-    if system == "Windows":
-        # Prioritize winget, then scoop, then choco for Windows
-        if shutil.which("winget"):
-            install_command = "winget install --id GitHub.cli --source winget"
-        elif shutil.which("scoop"):
-            install_command = "scoop install gh"
-        elif shutil.which("choco"):
-            install_command = "choco install gh"
-    elif system == "Darwin":
-        if shutil.which("brew"):
-            install_command = "brew install gh"
-    elif system == "Linux":
-        # Suggest apt for Debian/Ubuntu, but link to docs for others
-        if shutil.which("apt"):
-            install_command = "sudo apt update && sudo apt install gh -y"
-    
-    print("\n➡️ Please install it by running the following command in your terminal:")
-    if install_command:
-        print(f"\n   {install_command}\n")
-    else:
-        # Fallback for unsupported systems or if no package manager is found
-        print("\n   Could not detect a common package manager.")
-        print("   Please visit the official installation guide:")
-        print("   https://github.com/cli/cli#installation\n")
-
-    print("After installation, please open a NEW terminal and run your command again.")
+        try:
+            # Verify gh is actually working
+            subprocess.run(["gh", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return True
+        except:
+            # Found but not working - might be PATH issue
+            return False
     return False
+
+def install_gh_cli() -> bool:
+    """Main installation function with comprehensive error handling"""
+    system = platform.system()
+    machine = platform.machine().lower()
+    
+    print("\n🔧 Installing GitHub CLI...")
+    print(f"📋 System: {system}, Architecture: {machine}")
+    
+    try:
+        if system == "Windows":
+            return install_gh_cli_windows()
+        elif system == "Darwin":
+            return install_gh_cli_mac()
+        elif system == "Linux":
+            return install_gh_cli_linux()
+        else:
+            print(f"❌ Unsupported OS: {system}")
+            return False
+    except Exception as e:
+        print(f"❌ Installation failed: {str(e)}")
+        return False
+
+def install_gh_cli_windows() -> bool:
+    """Windows installation with multiple fallback methods and PATH management"""
+    methods = [
+        try_winget_install,
+        try_scoop_install,
+        try_choco_install,
+        try_direct_msi_install,
+        try_direct_zip_install
+    ]
+    
+    for method in methods:
+        if method():
+            if verify_gh_installation():
+                return True
+        print("⚠️ Trying next installation method...")
+    
+    print("❌ All installation methods failed")
+    return False
+
+def try_winget_install() -> bool:
+    """Attempt installation via winget"""
+    if not shutil.which("winget"):
+        return False
+    
+    print("\n🔄 Attempting winget installation...")
+    try:
+        subprocess.run(
+            ["winget", "install", "--id", "GitHub.cli", "--silent", "--accept-package-agreements", "--accept-source-agreements"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ winget failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_scoop_install() -> bool:
+    """Attempt installation via scoop"""
+    if not shutil.which("scoop"):
+        return False
+    
+    print("\n🔄 Attempting scoop installation...")
+    try:
+        subprocess.run(
+            ["scoop", "install", "gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ scoop failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_choco_install() -> bool:
+    """Attempt installation via chocolatey"""
+    if not shutil.which("choco"):
+        return False
+    
+    print("\n🔄 Attempting chocolatey installation...")
+    try:
+        subprocess.run(
+            ["choco", "install", "gh", "-y"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ chocolatey failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_direct_msi_install() -> bool:
+    """Direct MSI installation with proper PATH handling"""
+    print("\n🔄 Attempting direct MSI installation...")
+    try:
+        # Get latest release info
+        release_info = get_github_release_info()
+        if not release_info:
+            return False
+            
+        # Find appropriate MSI
+        msi_asset = next(
+            (a for a in release_info.get('assets', [])
+            if a['name'].endswith('_windows_amd64.msi') or 
+               a['name'].endswith('_windows_386.msi')),
+            None
+        )
+        
+        if not msi_asset:
+            print("❌ Could not find Windows MSI installer")
+            return False
+            
+        # Download MSI
+        temp_dir = tempfile.mkdtemp()
+        msi_path = os.path.join(temp_dir, msi_asset['name'])
+        print(f"⬇️ Downloading {msi_asset['name']}...")
+        download_file(msi_asset['browser_download_url'], msi_path)
+        
+        # Install with appropriate privileges
+        print("🛠 Installing...")
+        try:
+            # Try with admin privileges first
+            subprocess.run(
+                ["msiexec", "/i", msi_path, "/quiet", "/norestart"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError:
+            # Fallback to user installation
+            print("⚠️ Admin install failed, trying user installation...")
+            subprocess.run(
+                ["msiexec", "/i", msi_path, "/quiet", "/norestart", "ALLUSERS=2"],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        
+        # Clean up
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        # Add to PATH if needed
+        program_files = os.environ.get("ProgramFiles", "C:\\Program Files")
+        gh_path = os.path.join(program_files, "GitHub CLI", "gh.exe")
+        if os.path.exists(gh_path):
+            add_to_path(os.path.dirname(gh_path))
+            return True
+        
+        local_appdata = os.environ.get("LOCALAPPDATA", "")
+        gh_path = os.path.join(local_appdata, "GitHub CLI", "gh.exe")
+        if os.path.exists(gh_path):
+            add_to_path(os.path.dirname(gh_path))
+            return True
+            
+        print("❌ Installation completed but couldn't find gh.exe")
+        return False
+        
+    except Exception as e:
+        print(f"❌ MSI installation failed: {str(e)}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return False
+
+def try_direct_zip_install() -> bool:
+    """Fallback ZIP installation for Windows"""
+    print("\n🔄 Attempting direct ZIP installation...")
+    try:
+        # Get latest release info
+        release_info = get_github_release_info()
+        if not release_info:
+            return False
+            
+        # Find appropriate ZIP
+        zip_asset = next(
+            (a for a in release_info.get('assets', [])
+            if a['name'].endswith('windows_amd64.zip') or 
+               a['name'].endswith('windows_386.zip')),
+            None
+        )
+        
+        if not zip_asset:
+            print("❌ Could not find Windows ZIP package")
+            return False
+            
+        # Download and extract
+        temp_dir = tempfile.mkdtemp()
+        zip_path = os.path.join(temp_dir, zip_asset['name'])
+        print(f"⬇️ Downloading {zip_asset['name']}...")
+        download_file(zip_asset['browser_download_url'], zip_path)
+        
+        print("📦 Extracting...")
+        shutil.unpack_archive(zip_path, temp_dir)
+        
+        # Find the binary
+        for root, _, files in os.walk(temp_dir):
+            if "gh.exe" in files:
+                bin_dir = root
+                break
+        else:
+            print("❌ Could not find gh.exe in extracted files")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            return False
+        
+        # Install to local apps directory
+        install_dir = os.path.join(os.environ.get("LOCALAPPDATA", ""), "GitHubCLI")
+        os.makedirs(install_dir, exist_ok=True)
+        
+        # Copy files
+        for item in os.listdir(bin_dir):
+            src = os.path.join(bin_dir, item)
+            dst = os.path.join(install_dir, item)
+            if os.path.isdir(src):
+                shutil.copytree(src, dst, dirs_exist_ok=True)
+            else:
+                shutil.copy2(src, dst)
+        
+        # Add to PATH
+        add_to_path(install_dir)
+        
+        # Clean up
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        
+        return True
+        
+    except Exception as e:
+        print(f"❌ ZIP installation failed: {str(e)}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return False
+
+def install_gh_cli_mac() -> bool:
+    """macOS installation with multiple methods"""
+    methods = [
+        try_brew_install,
+        try_direct_pkg_install,
+        try_direct_tar_install
+    ]
+    
+    for method in methods:
+        if method():
+            if verify_gh_installation():
+                return True
+        print("⚠️ Trying next installation method...")
+    
+    print("❌ All installation methods failed")
+    return False
+
+def try_brew_install() -> bool:
+    """Attempt installation via Homebrew"""
+    if not shutil.which("brew"):
+        return False
+    
+    print("\n🔄 Attempting Homebrew installation...")
+    try:
+        subprocess.run(
+            ["brew", "install", "gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ Homebrew failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_direct_pkg_install() -> bool:
+    """Direct PKG installation for macOS"""
+    print("\n🔄 Attempting direct PKG installation...")
+    try:
+        release_info = get_github_release_info()
+        if not release_info:
+            return False
+            
+        pkg_asset = next(
+            (a for a in release_info.get('assets', [])
+            if a['name'].endswith('.pkg') and 'macOS' in a['name']),
+            None
+        )
+        
+        if not pkg_asset:
+            print("❌ Could not find macOS PKG installer")
+            return False
+            
+        temp_dir = tempfile.mkdtemp()
+        pkg_path = os.path.join(temp_dir, pkg_asset['name'])
+        print(f"⬇️ Downloading {pkg_asset['name']}...")
+        download_file(pkg_asset['browser_download_url'], pkg_path)
+        
+        print("🛠 Installing...")
+        subprocess.run(
+            ["sudo", "installer", "-pkg", pkg_path, "-target", "/"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return True
+        
+    except Exception as e:
+        print(f"❌ PKG installation failed: {str(e)}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return False
+
+def try_direct_tar_install() -> bool:
+    """Fallback tar.gz installation for macOS"""
+    print("\n🔄 Attempting direct tar.gz installation...")
+    try:
+        release_info = get_github_release_info()
+        if not release_info:
+            return False
+            
+        tar_asset = next(
+            (a for a in release_info.get('assets', [])
+            if a['name'].endswith('macOS_amd64.tar.gz')),
+            None
+        )
+        
+        if not tar_asset:
+            print("❌ Could not find macOS tar.gz package")
+            return False
+            
+        temp_dir = tempfile.mkdtemp()
+        tar_path = os.path.join(temp_dir, tar_asset['name'])
+        print(f"⬇️ Downloading {tar_asset['name']}...")
+        download_file(tar_asset['browser_download_url'], tar_path)
+        
+        print("📦 Extracting...")
+        subprocess.run(
+            ["tar", "-xzf", tar_path, "-C", temp_dir],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        # Find the binary
+        for root, _, files in os.walk(temp_dir):
+            if "gh" in files:
+                bin_path = os.path.join(root, "gh")
+                break
+        else:
+            print("❌ Could not find gh binary in extracted files")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            return False
+        
+        # Install to /usr/local/bin
+        print("🛠 Installing to /usr/local/bin...")
+        subprocess.run(
+            ["sudo", "install", "-m", "755", bin_path, "/usr/local/bin/gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return True
+        
+    except Exception as e:
+        print(f"❌ tar.gz installation failed: {str(e)}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return False
+
+def install_gh_cli_linux() -> bool:
+    """Linux installation with distro detection and multiple methods"""
+    methods = []
+    
+    # Detect distribution
+    if os.path.exists("/etc/debian_version"):
+        methods.extend([
+            try_apt_install,
+            try_deb_install
+        ])
+    elif os.path.exists("/etc/redhat-release"):
+        methods.extend([
+            try_yum_install,
+            try_dnf_install
+        ])
+    elif os.path.exists("/etc/arch-release"):
+        methods.extend([
+            try_pacman_install
+        ])
+    else:
+        print("⚠️ Unknown Linux distribution, trying generic methods")
+    
+    # Add fallback methods
+    methods.extend([
+        try_tar_install_linux,
+        try_script_install
+    ])
+    
+    for method in methods:
+        if method():
+            if verify_gh_installation():
+                return True
+        print("⚠️ Trying next installation method...")
+    
+    print("❌ All installation methods failed")
+    return False
+
+def try_apt_install() -> bool:
+    """APT installation for Debian/Ubuntu"""
+    if not shutil.which("apt"):
+        return False
+    
+    print("\n🔄 Attempting apt installation...")
+    try:
+        subprocess.run(
+            ["sudo", "apt", "update"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        subprocess.run(
+            ["sudo", "apt", "install", "-y", "gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ apt failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_deb_install() -> bool:
+    """Direct DEB package installation"""
+    print("\n🔄 Attempting deb package installation...")
+    try:
+        release_info = get_github_release_info()
+        if not release_info:
+            return False
+            
+        deb_asset = next(
+            (a for a in release_info.get('assets', [])
+            if a['name'].endswith('linux_amd64.deb') or 
+               a['name'].endswith('linux_arm64.deb')),
+            None
+        )
+        
+        if not deb_asset:
+            print("❌ Could not find DEB package")
+            return False
+            
+        temp_dir = tempfile.mkdtemp()
+        deb_path = os.path.join(temp_dir, deb_asset['name'])
+        print(f"⬇️ Downloading {deb_asset['name']}...")
+        download_file(deb_asset['browser_download_url'], deb_path)
+        
+        print("🛠 Installing...")
+        subprocess.run(
+            ["sudo", "dpkg", "-i", deb_path],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        # Fix potential dependencies
+        subprocess.run(
+            ["sudo", "apt", "--fix-broken", "install", "-y"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return True
+        
+    except Exception as e:
+        print(f"❌ DEB installation failed: {str(e)}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return False
+
+def try_yum_install() -> bool:
+    """YUM installation for RHEL/CentOS"""
+    if not shutil.which("yum"):
+        return False
+    
+    print("\n🔄 Attempting yum installation...")
+    try:
+        subprocess.run(
+            ["sudo", "yum", "install", "-y", "gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ yum failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_dnf_install() -> bool:
+    """DNF installation for Fedora"""
+    if not shutil.which("dnf"):
+        return False
+    
+    print("\n🔄 Attempting dnf installation...")
+    try:
+        subprocess.run(
+            ["sudo", "dnf", "install", "-y", "gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ dnf failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_pacman_install() -> bool:
+    """Pacman installation for Arch"""
+    if not shutil.which("pacman"):
+        return False
+    
+    print("\n🔄 Attempting pacman installation...")
+    try:
+        subprocess.run(
+            ["sudo", "pacman", "-Sy", "--noconfirm", "github-cli"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ pacman failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def try_tar_install_linux() -> bool:
+    """Generic tar.gz installation for Linux"""
+    print("\n🔄 Attempting tar.gz installation...")
+    try:
+        release_info = get_github_release_info()
+        if not release_info:
+            return False
+            
+        tar_asset = next(
+            (a for a in release_info.get('assets', [])
+            if a['name'].endswith('linux_amd64.tar.gz') or 
+               a['name'].endswith('linux_arm64.tar.gz')),
+            None
+        )
+        
+        if not tar_asset:
+            print("❌ Could not find tar.gz package")
+            return False
+            
+        temp_dir = tempfile.mkdtemp()
+        tar_path = os.path.join(temp_dir, tar_asset['name'])
+        print(f"⬇️ Downloading {tar_asset['name']}...")
+        download_file(tar_asset['browser_download_url'], tar_path)
+        
+        print("📦 Extracting...")
+        subprocess.run(
+            ["tar", "-xzf", tar_path, "-C", temp_dir],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        # Find the binary
+        for root, _, files in os.walk(temp_dir):
+            if "gh" in files:
+                bin_path = os.path.join(root, "gh")
+                break
+        else:
+            print("❌ Could not find gh binary in extracted files")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            return False
+        
+        # Install to /usr/local/bin
+        print("🛠 Installing to /usr/local/bin...")
+        subprocess.run(
+            ["sudo", "install", "-m", "755", bin_path, "/usr/local/bin/gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return True
+        
+    except Exception as e:
+        print(f"❌ tar.gz installation failed: {str(e)}")
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return False
+
+def try_script_install() -> bool:
+    """Fallback script installation"""
+    print("\n🔄 Attempting script installation...")
+    try:
+        subprocess.run(
+            ["curl", "-fsSL", "https://cli.github.com/packages/githubcli-archive-keyring.gpg", "|", "sudo", "dd", "of=/usr/share/keyrings/githubcli-archive-keyring.gpg"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        subprocess.run(
+            ["sudo", "chmod", "go+r", "/usr/share/keyrings/githubcli-archive-keyring.gpg"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        subprocess.run(
+            ['echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null'],
+            shell=True,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        subprocess.run(
+            ["sudo", "apt", "update"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        subprocess.run(
+            ["sudo", "apt", "install", "-y", "gh"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ Script installation failed: {e.stderr.decode().strip() if e.stderr else 'Unknown error'}")
+        return False
+
+def get_github_release_info() -> Optional[dict]:
+    """Get latest release info from GitHub API"""
+    try:
+        with urllib.request.urlopen("https://api.github.com/repos/cli/cli/releases/latest") as response:
+            return json.loads(response.read().decode())
+    except Exception as e:
+        print(f"❌ Failed to get release info: {str(e)}")
+        return None
+
+def download_file(url: str, path: str) -> bool:
+    """Download a file with progress reporting"""
+    try:
+        def reporthook(count, block_size, total_size):
+            percent = int(count * block_size * 100 / total_size)
+            sys.stdout.write(f"\rDownloading... {percent}%")
+            sys.stdout.flush()
+            
+        urllib.request.urlretrieve(url, path, reporthook=reporthook)
+        print()  # New line after progress
+        return True
+    except Exception as e:
+        print(f"\n❌ Download failed: {str(e)}")
+        return False
+
+def add_to_path(directory: str) -> bool:
+    """Add directory to PATH if not already present"""
+    try:
+        current_path = os.environ.get("PATH", "")
+        if directory not in current_path.split(os.pathsep):
+            if platform.system() == "Windows":
+                # Permanent PATH modification on Windows
+                import winreg
+                with winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER) as root:
+                    with winreg.OpenKey(root, "Environment", 0, winreg.KEY_ALL_ACCESS) as key:
+                        path_value, _ = winreg.QueryValueEx(key, "PATH")
+                        new_path = f"{path_value};{directory}" if path_value else directory
+                        winreg.SetValueEx(key, "PATH", 0, winreg.REG_EXPAND_SZ, new_path)
+                # Notify other processes of PATH change
+                import ctypes
+                ctypes.windll.user32.SendMessageTimeoutW(
+                    0xFFFF, 0x001A, 0, "Environment", 0x02, 5000, None
+                )
+            else:
+                # For Unix-like systems, modify current session PATH
+                os.environ["PATH"] = f"{directory}{os.pathsep}{os.environ.get('PATH', '')}"
+                # Add to shell profile files
+                profile_files = [
+                    os.path.expanduser("~/.bashrc"),
+                    os.path.expanduser("~/.zshrc"),
+                    os.path.expanduser("~/.profile")
+                ]
+                export_line = f'\nexport PATH="{directory}:$PATH"\n'
+                for profile in profile_files:
+                    if os.path.exists(profile):
+                        with open(profile, "a") as f:
+                            f.write(export_line)
+            print(f"✅ Added {directory} to PATH")
+        return True
+    except Exception as e:
+        print(f"⚠️ Failed to update PATH: {str(e)}")
+        return False
+
+def verify_gh_installation() -> bool:
+    """Verify gh is properly installed and in PATH"""
+    if not shutil.which("gh"):
+        print("❌ GitHub CLI not found in PATH after installation")
+        return False
+    
+    try:
+        result = subprocess.run(
+            ["gh", "--version"],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        print(f"✅ GitHub CLI installed: {result.stdout.splitlines()[0]}")
+        return True
+    except subprocess.CalledProcessError:
+        print("❌ GitHub CLI found but not working")
+        return False
+
+def check_and_install_gh() -> bool:
+    """Main function to check and install GitHub CLI"""
+    if check_gh_installed():
+        return True
+    
+    if not install_gh_cli():
+        print("\n❌ Failed to install GitHub CLI. Please try manual installation:")
+        print("Visit https://github.com/cli/cli#installation for instructions")
+        return False
+    
+    if not check_gh_installed():
+        print("\n⚠️ Installation completed but GitHub CLI not detected in PATH")
+        print("Please restart your terminal or add the installation directory to your PATH")
+        return False
+    
+    return True
 
 def gh_authenticated():
     """Check if user is authenticated with GitHub CLI"""
     try:
-        # Use DEVNULL to hide the "Logged in to github.com" success message
         result = subprocess.run(["gh", "auth", "status"], capture_output=True, text=True, check=True)
         return "Logged in to github.com" in result.stderr
     except (subprocess.CalledProcessError, FileNotFoundError):
