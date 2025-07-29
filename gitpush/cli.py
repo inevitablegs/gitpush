@@ -317,6 +317,22 @@ def gh_authenticated():
     except (subprocess.CalledProcessError, FileNotFoundError):
         return False
 
+
+def is_local_ahead() -> bool:
+    try:
+        result = subprocess.run(
+            ["git", "rev-list", "--left-right", "--count", "origin/main...HEAD"],
+            capture_output=True, text=True, check=True
+        )
+        behind_ahead = result.stdout.strip().split()
+        if len(behind_ahead) == 2:
+            behind, ahead = map(int, behind_ahead)
+            return ahead > 0
+        return False
+    except subprocess.CalledProcessError:
+        return False
+
+
 def authenticate_with_gh():
     """Authenticate user with GitHub CLI"""
     print("\n🔑 GitHub authentication required.")
@@ -437,7 +453,11 @@ def standard_git_push(commit_message, branch, remote, force=False, tags=False):
         else:
             print("ℹ️ No commit message provided. Pushing only staged changes.")
         
-        push_cmd = ["git", "push"]
+        if is_local_ahead():
+            push_cmd = ["git", "push"]
+        else:
+            push_cmd = ["git", "push", "origin", "main"]
+
         if force:
             push_cmd.append("--force-with-lease")
             print("⚠️ Using safe force push (--force-with-lease).")
