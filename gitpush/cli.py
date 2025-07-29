@@ -566,6 +566,30 @@ def attempt_rebase(remote: str, branch: str) -> bool:
         return False
 
 
+def get_git_sync_status(remote: str = "origin", branch: str = "main") -> tuple[str, int, int]:
+    """
+    Returns a tuple (status, behind, ahead) where status is one of:
+    'ahead', 'behind', 'diverged', 'synced'
+    """
+    try:
+        subprocess.run(["git", "fetch", remote], check=True, capture_output=True)
+        result = subprocess.run(
+            ["git", "rev-list", "--left-right", "--count", f"{remote}/{branch}...{branch}"],
+            capture_output=True, text=True, check=True
+        )
+        behind_str, ahead_str = result.stdout.strip().split()
+        behind, ahead = int(behind_str), int(ahead_str)
+
+        if behind > 0 and ahead > 0:
+            return "diverged", behind, ahead
+        elif ahead > 0:
+            return "ahead", behind, ahead
+        elif behind > 0:
+            return "behind", behind, ahead
+        else:
+            return "synced", behind, ahead
+    except subprocess.CalledProcessError:
+        return "unknown", 0, 0
 
 
 # --- Main Entry Point ---
@@ -624,12 +648,25 @@ def run():
              print("✅ Git repository initialized successfully.")
     
     else:
-        if has_incoming_changes(args.remote, target_branch):
-            conflicts = pull_and_check_conflicts(args.remote, target_branch)
-            if conflicts:
+        sync_status, behind, ahead = get_git_sync_status(args.remote, target_branch)
+        print(f"\n📊 Git status: {sync_status.upper()} (Behind: {behind}, Ahead: {ahead})")
+
+        if sync_status == "behind":
+            print("🔄 Your branch is behind remote. Pulling latest changes...")
+            if pull_and_check_conflicts(args.remote, target_branch):
                 show_merge_conflict_details()
                 print("\n❌ Resolve conflicts before pushing.")
                 sys.exit(1)
+
+        elif sync_status == "diverged":
+            print("⚠️ Your branch has diverged from remote. Rebase recommended.")
+            if attempt_rebase(args.remote, target_branch):
+                print("✅ Rebase done. Proceeding to push...")
+            else:
+                print("❌ Rebase failed. Please resolve manually.")
+                sys.exit(1)
+
+
 
         if not standard_git_push(
             args.commit,
@@ -642,3 +679,4 @@ def run():
 
 if __name__ == "__main__":
     run()
+    
