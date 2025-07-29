@@ -161,6 +161,6 @@ Contributions welcome! Please follow these steps:
 
 ## License 📄
 
-MIT - See LICENSE for details.
+MIT - See LICENSE for details.   
 
 <center>✨ <strong>Happy Coding!</strong> ✨</center>
