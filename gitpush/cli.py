@@ -476,6 +476,73 @@ def standard_git_push(commit_message, branch, remote, force=False, tags=False):
         print(f"❌ Push failed: {error_output}", file=sys.stderr)
         return False
 
+
+def has_incoming_changes(remote: str = "origin", branch: str = "main") -> bool:
+    try:
+        subprocess.run(["git", "fetch", remote], check=True, capture_output=True)
+
+        result = subprocess.run(
+            ["git", "rev-list", "--left-right", "--count", f"{remote}/{branch}...{branch}"],
+            check=True, capture_output=True, text=True
+        )
+        behind_ahead = result.stdout.strip().split()
+        if len(behind_ahead) == 2:
+            behind, ahead = map(int, behind_ahead)
+            return behind > 0
+        return False
+    except subprocess.CalledProcessError:
+        return False
+
+
+def pull_and_check_conflicts(remote: str = "origin", branch: str = "main") -> bool:
+    print("🔄 Pulling latest changes before pushing...")
+
+    try:
+        result = subprocess.run(["git", "pull", remote, branch], capture_output=True, text=True)
+
+        if "CONFLICT" in result.stdout or "CONFLICT" in result.stderr:
+            print("❗ Merge conflicts detected.")
+            return True
+        else:
+            print("✅ Pulled successfully. No conflicts.")
+            return False
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Pull failed: {e.stderr or str(e)}", file=sys.stderr)
+        return True
+
+
+
+def show_merge_conflict_details():
+    print("\n🔍 Merge Conflict Report:\n")
+
+    try:
+        result = subprocess.run(["git", "diff", "--name-only", "--diff-filter=U"], capture_output=True, text=True, check=True)
+        conflicted_files = result.stdout.strip().splitlines()
+
+        if not conflicted_files:
+            print("✅ No merge conflicts found.")
+            return
+
+        for file in conflicted_files:
+            print(f"📄 File: {file}")
+            try:
+                with open(file, 'r', encoding='utf-8') as f:
+                    lines = f.readlines()
+                    for i, line in enumerate(lines):
+                        if line.startswith("<<<<<<<") or line.startswith("=======") or line.startswith(">>>>>>>"):
+                            marker = line.strip()
+                            print(f"   ⚠️  Conflict Marker ({marker}) at line {i + 1}")
+            except Exception as e:
+                print(f"   ❌ Could not read file {file}: {str(e)}")
+
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Could not retrieve conflicted files: {str(e)}")
+
+
+
+
+
+
 # --- Main Entry Point ---
 
 def run():
@@ -532,6 +599,13 @@ def run():
              print("✅ Git repository initialized successfully.")
     
     else:
+        if has_incoming_changes(args.remote, target_branch):
+            conflicts = pull_and_check_conflicts(args.remote, target_branch)
+            if conflicts:
+                show_merge_conflict_details()
+                print("\n❌ Resolve conflicts before pushing.")
+                sys.exit(1)
+
         if not standard_git_push(
             args.commit,
             target_branch,
