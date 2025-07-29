@@ -34,3 +34,5 @@ setup(
         "Tracker": "https://github.com/inevitablegs/gitpush/issues",
     },
 )
+
+# Line added for checking v0.3.3
