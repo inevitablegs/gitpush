@@ -11,22 +11,22 @@ gh auth login  # Authenticate with GitHub
 ### 1. New Repository Creation
 ```bash
 # Create public repo
-gitpush_tool "Initial commit" --new-repo my-project
+gitpush "Initial commit" --new-repo my-project
 
 # Create private repo
-gitpush_tool "Initial commit" --new-repo private-project --private
+gitpush "Initial commit" --new-repo private-project --private
 ```
 
 ### 2. Standard Git Operations
 ```bash
 # Regular push
-gitpush_tool "Fixed login bug"
+gitpush "Fixed login bug"
 
 # Force push
-gitpush_tool "Rebased history" --force
+gitpush "Rebased history" --force
 
 # Push tags
-gitpush_tool --tags
+gitpush --tags
 ```
 
 ## ⚙️ Configuration

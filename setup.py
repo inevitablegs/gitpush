@@ -6,12 +6,12 @@ long_description = (Path(__file__).parent / "LONG_DESCRIPTION.md").read_text(enc
 
 setup(
     name="gitpush-tool",
-    version="0.3.0",
+    version="0.3.1",
     packages=find_packages(),
     install_requires=[],
     entry_points={
         "console_scripts": [
-            "gitpush_tool=gitpush_tool.cli:run"
+            "gitpush=gitpush.cli:run"
         ],
     },
     author="Ganesh Sonawane",

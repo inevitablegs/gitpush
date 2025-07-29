@@ -11,9 +11,9 @@ Key Features:
 • Fresh project setup in one command
 
 Basic Usage:
-  gitpush_tool "Commit message"              # Standard push
-  gitpush_tool --new-repo project-name       # Create new repo
-  gitpush_tool --force                       # Safe force push
+  gitpush "Commit message"              # Standard push
+  gitpush --new-repo project-name       # Create new repo
+  gitpush --force                       # Safe force push
 
 Install GitHub CLI first:
   macOS: brew install gh

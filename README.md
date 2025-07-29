@@ -27,36 +27,36 @@ pip install gitpush-tool
 
 | Command | Description |
 |--------|-------------|
-| `gitpush_tool "Commit message"` | Standard push with commit |
-| `gitpush_tool` | Push without commit (only staged changes) |
-| `gitpush_tool --force` | Safe force push |
-| `gitpush_tool --tags` | Push all tags |
+| `gitpush "Commit message"` | Standard push with commit |
+| `gitpush` | Push without commit (only staged changes) |
+| `gitpush --force` | Safe force push |
+| `gitpush --tags` | Push all tags |
 
 ### New Repository Workflow
 
 ```bash
 # Create new public repo
-gitpush_tool "Initial commit" --new-repo project-name
+gitpush "Initial commit" --new-repo project-name
 
 # Create private repo with description
-gitpush_tool "Initial commit" --new-repo private-project --private --description "My awesome project"
+gitpush "Initial commit" --new-repo private-project --private --description "My awesome project"
 ```
 
 ### Branch Management
 
 ```bash
 # Push to specific branch
-gitpush_tool "Commit message" feature-branch
+gitpush "Commit message" feature-branch
 
 # Push to specific remote and branch
-gitpush_tool "Commit message" main upstream
+gitpush "Commit message" main upstream
 ```
 
 ### Initialization
 
 ```bash
 # Initialize new repo only
-gitpush_tool --init
+gitpush --init
 ```
 
 ## Workflow Examples 🔥
@@ -67,17 +67,17 @@ gitpush_tool --init
 mkdir my-app
 cd my-app
 touch README.md main.py
-gitpush_tool "Initial commit" --new-repo my-app
+gitpush "Initial commit" --new-repo my-app
 ```
 
 ### Scenario 2: Existing Project Updates
 
 ```bash
 # After making changes
-gitpush_tool "Fixed authentication bug"
+gitpush "Fixed authentication bug"
 
 # Force push after rebase
-gitpush_tool "Rebased commits" --force
+gitpush "Rebased commits" --force
 ```
 
 ### Scenario 3: Create Empty Repository
@@ -85,7 +85,7 @@ gitpush_tool "Rebased commits" --force
 ```bash
 mkdir empty-project
 cd empty-project
-gitpush_tool --init
+gitpush --init
 ```
 
 ## Configuration ⚙️

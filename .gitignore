@@ -1,5 +1,6 @@
 .env
-gitpush_tool.egg-info
+gitpush.egg-info
 dist
 build
 token.txt
+digest.txt
