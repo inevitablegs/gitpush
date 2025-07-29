@@ -461,20 +461,35 @@ def standard_git_push(commit_message, branch, remote, force=False, tags=False):
         if force:
             push_cmd.append("--force-with-lease")
             print("⚠️ Using safe force push (--force-with-lease).")
-        if tags: push_cmd.append("--tags")
-        if remote and branch: push_cmd.extend([remote, branch])
+        if tags:
+            push_cmd.append("--tags")
+        if remote and branch:
+            push_cmd.extend([remote, branch])
         
         print(f"🚀 Executing: {' '.join(push_cmd)}")
         subprocess.run(push_cmd, check=True)
         print("✅ Successfully pushed changes.")
         return True
+
     except subprocess.CalledProcessError as e:
         error_output = e.stderr.decode(errors='ignore').strip() if e.stderr else str(e)
+
         if "nothing to commit" in error_output:
             print("ℹ️ No changes to commit. Nothing to do.")
             return True
+
+        if "non-fast-forward" in error_output.lower():
+            print("\n❗ Detected non-fast-forward issue. Attempting rebase...")
+            if attempt_rebase(remote, branch):
+                print("🔁 Retrying push after rebase...")
+                return standard_git_push(commit_message, branch, remote, force, tags)
+            else:
+                print("❌ Rebase failed. Please resolve conflicts manually and re-run the push.")
+                return False
+
         print(f"❌ Push failed: {error_output}", file=sys.stderr)
         return False
+
 
 
 def has_incoming_changes(remote: str = "origin", branch: str = "main") -> bool:
@@ -539,6 +554,16 @@ def show_merge_conflict_details():
         print(f"❌ Could not retrieve conflicted files: {str(e)}")
 
 
+def attempt_rebase(remote: str, branch: str) -> bool:
+    print("🔁 Attempting: git pull --rebase")
+    try:
+        subprocess.run(["git", "pull", "--rebase", remote, branch], check=True)
+        print("✅ Rebase completed successfully.")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Rebase failed: {e.stderr.decode(errors='ignore') if e.stderr else str(e)}")
+        show_merge_conflict_details()
+        return False
 
 
 
